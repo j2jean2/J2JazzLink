@@ -1,0 +1,107 @@
+desc:J2JJlatencySpy
+//tags: mesure de latence JJlab
+//author: J2
+
+slider1:-60<-80,6,1>Open Threshold (dB)
+//slider2:37<0,127,1>tap  note
+//slider3:24<0,127,1>JJazzLab PlayPause note
+
+slider6:0<0,1,0.001>latence audio
+
+
+in_pin:left input
+in_pin:right input
+out_pin:none
+out_pin:none
+options:gmem=J2JJazzLink;
+//sprintf(#dbg_desc, "MIDI ChordGoooen");
+//////////////////////////////////////////
+
+@init
+ ext_noinit=1;
+// pdc_midi=1;
+  noteon=9*16;
+  noteoff=8*16;
+  tapnote=37; 
+  nbblocs=0;
+//////////////////////
+function resetstats() (
+datesignal=0;
+latence=0; 
+
+positioncommande=0;
+positionsignal=0;
+nbessais=0;
+moy=0;
+somcar=0;
+sigma=0;
+ mesured=1;
+
+);
+///////////////////////////////
+ resetstats();
+
+//////////////////////////////////////
+function  ajouteessai(xlat) (
+moy=(moy*nbessais+xlat)/(nbessais+1);
+somcar=somcar+xlat*xlat;
+nbessais+=1;
+sigma=sqrt(somcar/nbessais-moy*moy);
+  gmem[1]=latence;
+  gmem[2]=nbessais;
+  gmem[3]=moy;
+  gmem[4]=sigma;
+);
+//////////////////////////
+
+@slider
+  othresh=2^(slider1/6);
+ 
+@block
+Dureebloc=samplesblock/srate;
+nbblocs+=1;
+  pos=0;
+gmem[10]==1? 
+(resetstats(); 
+  gmem[1]=latence;
+  gmem[2]=nbessais;
+  gmem[3]=moy;
+  gmem[4]=sigma;
+gmem[10]=0;);
+playpausenote=gmem[11]; //fixée par le script
+play_state==1? (  
+  while
+  (
+    midirecv(offset, msg1, note,velo) ?
+    ( 
+    status = msg1 & $xF0;
+    chan = msg1 & $x0F;
+    status==noteon ? (
+      chan==0 &&  note==playpausenote ? (
+      midisend(offset, msg1, note,velo);
+        mesured=0;
+         mesuredm=0;
+         positioncommande=play_position;
+  ///    datecommande=(nbblocs*samplesblock+offset)/srate; abandonné pour play pos
+      );
+  );
+    
+    1; // Force loop to continue until all messages have been processed
+   );
+  );
+);
+@sample
+  pos += 1;
+ linvel=min(1,max(abs(spl0),abs(spl1)));
+ linvel >= othresh && mesured==0 &&  play_state==1?(
+  positionsignal=play_position;
+  latence=positionsignal-positioncommande;
+  slider6=latence;
+  ajouteessai(latence);
+  mesured=1;
+ );
+ 
+//  spl0 = spl0 * mix;
+//  spl1 = spl1 * mix;
+  
+
