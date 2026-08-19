@@ -12,3 +12,6 @@ You need Reaper >= 7.72 and the ReaImgui library (see the Reaper website)
 1) Place the J2JAZZLink.lua script in Reaper’s scripts folder.
 2) Place the J2JJlatencyspy.jsfx plugin in Reaper’s effects folder (this plugin is used to estimate send latency when using JJazzLab “live”)
 3) To complete the installation, launch Reaper and activate J2JAZZLink from Reaper’s Actions window (New Action, Load Reascript). It’s very useful to assign this script to an icon in the toolbar (Customize toolbar).
+
+some vids about J2JazzLink :
+https://www.youtube.com/@J2JazzLink
